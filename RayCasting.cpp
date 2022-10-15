@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include "material.hpp"
 
+#define ANTIALIASING 0
+
 // auto CreateSysCoord(unsigned x, unsigned y)
 // {
 //     Vector i = {1, 0, 0}, j = {0, -1, 0}, k = {0, 0, 1};
@@ -115,8 +117,9 @@ void RenderScene(sf::RenderWindow& window, const Camera& cam, const Hitable* wor
         for (int x = 0, weight = window.getSize().x; x < weight; ++x)
         {
             pixel.setPosition(x, y);
+#if ANTIALIASING == 1
             Color color;
-            int sn = 5;
+            int sn = 10;
             for (int s = 0; s < sn; ++s)
             {
                 int u = x + 2 * drand48() - 1;
@@ -125,11 +128,25 @@ void RenderScene(sf::RenderWindow& window, const Camera& cam, const Hitable* wor
                 color += GetColor(ray, world, 1); 
             }
             color /= sn;
+#else
+            Ray ray = cam.get_ray(x, y);
+            Color color = GetColor(ray, world, 1); 
+#endif
             pixel.setFillColor(sf::Color(color.getX(), color.getY(), color.getZ()));
             window.draw(pixel);
         }
     }
 }
+
+
+
+/*Hitable* randomScene()
+{
+    int n = 500;
+    Hitable** list = new Hitable*[n + 1];
+    list[0] = 
+}*/
+
 
 
 int main()
@@ -143,12 +160,11 @@ int main()
     list[0] = new Sphere(Vector{X/2,       Y/2,         -200}, 200,     new lambertian{Vector{0.8*255, 0.3*255, 0.3*255}});
     list[1] = new Sphere(Vector{X/2,       Y/2 + 40200, -100}, 40000,   new lambertian{Vector{0.8*255, 0.8*255, 0*255}});
     list[2] = new Sphere(Vector{X/2 + 400, Y/2,         -200}, 200,     new metal{Vector{0.8*255, 0.6*255, 0.2*255}, 0.3});
-    list[3] = new Sphere(Vector{X/2 - 400, Y/2,         -200}, 200,     new metal{Vector{0.8*255, 0.8*255, 0.8*255}, 1.0});
+    list[3] = new Sphere(Vector{X/2 - 400, Y/2,         -200}, 200,     new dielectric{1.5});
     auto* world = new Hittable_list{&list[0], 4};
 
     // std::cout << cam.lower_left_corner << '\n';
     // std::cout << cam.get_ray(0, Y).direction();
-
 
     while (window.isOpen())
     {
